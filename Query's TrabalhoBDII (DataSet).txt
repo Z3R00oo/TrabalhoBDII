@@ -1,47 +1,71 @@
 CREATE TABLE cota_parlamentar (
 
-	numano int not null,
-	nummes int not null,
-	datemissao date,
-	txnomeparlamentar varchar(63) not null,
-	sgpartido varchar(18) not null,
-	sguf varchar(2) not null,
-	txtdescricao varchar(127) not null,
-	txtcnpjcpf varchar(14) not null,
-	txtfornecedor varchar(255) not null,
-	vlrdocumento decimal(8,2) not null,
-	vlrglosa decimal(8,2) not null,
-	vlrliquido decimal(8,2) not null
+	numano INT NOT NULL,
+	nummes INT NOT NULL,
+	datemissao DATE,
+	txnomeparlamentar VARCHAR(63) NOT NULL,
+	sgpartido VARCHAR(18) NOT NULL,
+	sguf VARCHAR(2) NOT NULL,
+	txtdescricao VARCHAR(127) NOT NULL,
+	txtcnpjcpf VARCHAR(14) NOT NULL,
+	txtfornecedor VARCHAR(255) NOT NULL,
+	vlrdocumento DECIMAL(8,2) NOT NULL,
+	vlrglosa DECIMAL(8,2) NOT NULL,
+	vlrliquido DECIMAL(8,2) NOT NULL
 );
 
-COPY cota_parlamentar from 'C:\Users\Pedro\Desktop\cota_parlamentar2019.csv' with csv header
+COPY cota_parlamentar FROM '[Caminho Arquivo]' WITH CSV HEADER
 
-COPY (SELECT SUM(cota_parlamentar.vlrliquido), cota_parlamentar.sgpartido from cota_parlamentar
-group by cota_parlamentar.sgpartido ORDER BY sum DESC) TO 'C:\Users\Pedro\Desktop\GastosTotaisPorPartido2019.csv' with csv header
+--1. Qual o Gasto Total Anual de Deputados do Estado de Goiás, em Ordem Decrescente, no intervalo entre 2018 e 2020?
+SELECT SUM(cp.vlrliquido) AS Total, cp.numano AS Ano 
+FROM cota_parlamentar cp
+WHERE cp.sguf = 'GO' AND cp.numano BETWEEN 2018 AND 2020
+GROUP BY Ano 
+ORDER BY Total DESC
 
+--2. Qual o Gasto Total Anual de Deputados do Estado de Goiás, no Ano de 2019, por Partido, em Ordem Decrescente?
+SELECT SUM(cp.vlrliquido) AS Total, cp.sgpartido AS Partido 
+FROM cota_parlamentar cp
+WHERE cp.numano = 2019 AND cp.sguf = 'GO'
+GROUP BY Partido 
+ORDER BY Total DESC
 
---1 - Gasto total por partido
-SELECT SUM(cota_parlamentar.vlrliquido), cota_parlamentar.sgpartido from cota_parlamentar
-group by cota_parlamentar.sgpartido ORDER BY sum DESC
+--3. Quais os Gastos Totais Mensais, no Ano de 2019, de Deputados do Estado de Goiás, em Ordem Decrescente?  
+SELECT SUM(cp.vlrliquido) AS Total, cp.nummes AS Mes 
+FROM cota_parlamentar cp 
+WHERE cp.numano = 2019 AND cp.sguf = 'GO'
+GROUP BY Mes 
+ORDER BY Total DESC
 
---2 - Qual foi o gasto total anual
-SELECT SUM(cota_parlamentar.vlrliquido) from cota_parlamentar
+--4. Qual o Gasto Total Anual, no ano de 2019, de Deputados no Estado de Goiás, para Cada Servico Apresentado, em Ordem Decrescente?
+SELECT SUM(cp.vlrliquido) AS Total, cp.txtdescricao AS Servico 
+FROM cota_parlamentar cp 
+WHERE cp.numano = 2019 AND cp.sguf = 'GO'
+GROUP BY Servico 
+ORDER BY Total DESC
 
---3 - Gastos totais mensais
-select SUM(cota_parlamentar.vlrliquido), cota_parlamentar.nummes from cota_parlamentar
-group by cota_parlamentar.nummes order by sum desc
+--5. Qual a Média Mensal, no Ano de 2019, para Gastos de Deputados no Estado de Goiás?
+SELECT ROUND(SUM(cp.vlrliquido) / 12, 2) 
+FROM cota_parlamentar cp 
+WHERE cp.numano = 2019 AND cp.sguf = 'GO'
 
---4 - Qual o Gasto total com cada Servico
-SELECT SUM(cota_parlamentar.vlrliquido), cota_parlamentar.txtdescricao from cota_parlamentar
-group by cota_parlamentar.txtdescricao ORDER BY SUM DESC
+-- 6. Qual o Gasto Total Anual de Deputados, no ano de 2019, de Cada Partido para Cada Servico Apresentado, no Estado de Goiás, em Ordem Ascendente?
+SELECT SUM(cp.vlrliquido) AS Total, cp.txtdescricao AS Servico, cp.sgpartido AS Partido 
+FROM cota_parlamentar cp 
+WHERE cp.numano = 2019 AND cp.sguf = 'GO'
+GROUP BY Partido, Servico 
+ORDER BY Partido ASC
 
---5 - Media mensal no ano de 2019 para gastos de depoutados do estado de Goias
-select ROUND(SUM(cota_parlamentar.vlrliquido) / 12, 2) from cota_parlamentar
+--7. Qual o Maior Gasto de Deputados do Estado de Goiás, por partido, em cada mês do Ano de 2019, em Ordem Ascendente? (TODO)
+SELECT MAX(cp.vlrliquido) AS Total, cp.sgpartido AS Partido, cp.nummes AS Mes, cp.txtdescricao AS Servico 
+FROM cota_parlamentar cp 
+WHERE cp.numano = 2019 AND cp.sguf = 'GO'
+GROUP BY Mes, Partido, Servico 
+ORDER BY Mes ASC
 
--- 6 - Qual o Gasto Total com cada servico para cada Partido
-SELECT SUM(cota_parlamentar.vlrliquido), cota_parlamentar.txtdescricao, cota_parlamentar.sgpartido from cota_parlamentar
-group by cota_parlamentar.sgpartido, cota_parlamentar.txtdescricao ORDER BY cota_parlamentar.sgpartido ASC
-
---7 - 
-SELECT DISTINCT max(cota_parlamentar.vlrliquido), cota_parlamentar.sgpartido, cota_parlamentar.nummes from cota_parlamentar
-group by cota_parlamentar.nummes, cota_parlamentar.sgpartido order by nummes Asc
+COPY (SELECT SUM(cp.vlrliquido) AS Total, cp.sgpartido AS Partido 
+FROM cota_parlamentar cp
+WHERE cp.numano = 2019 AND cp.sguf = 'GO'
+GROUP BY Partido 
+ORDER BY Total DESC) 
+TO '[Caminho Arquivo]' WITH CSV HEADER
