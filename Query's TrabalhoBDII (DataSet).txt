@@ -1,0 +1,47 @@
+CREATE TABLE cota_parlamentar (
+
+	numano int not null,
+	nummes int not null,
+	datemissao date,
+	txnomeparlamentar varchar(63) not null,
+	sgpartido varchar(18) not null,
+	sguf varchar(2) not null,
+	txtdescricao varchar(127) not null,
+	txtcnpjcpf varchar(14) not null,
+	txtfornecedor varchar(255) not null,
+	vlrdocumento decimal(8,2) not null,
+	vlrglosa decimal(8,2) not null,
+	vlrliquido decimal(8,2) not null
+);
+
+COPY cota_parlamentar from 'C:\Users\Pedro\Desktop\cota_parlamentar2019.csv' with csv header
+
+COPY (SELECT SUM(cota_parlamentar.vlrliquido), cota_parlamentar.sgpartido from cota_parlamentar
+group by cota_parlamentar.sgpartido ORDER BY sum DESC) TO 'C:\Users\Pedro\Desktop\GastosTotaisPorPartido2019.csv' with csv header
+
+
+--1 - Gasto total por partido
+SELECT SUM(cota_parlamentar.vlrliquido), cota_parlamentar.sgpartido from cota_parlamentar
+group by cota_parlamentar.sgpartido ORDER BY sum DESC
+
+--2 - Qual foi o gasto total anual
+SELECT SUM(cota_parlamentar.vlrliquido) from cota_parlamentar
+
+--3 - Gastos totais mensais
+select SUM(cota_parlamentar.vlrliquido), cota_parlamentar.nummes from cota_parlamentar
+group by cota_parlamentar.nummes order by sum desc
+
+--4 - Qual o Gasto total com cada Servico
+SELECT SUM(cota_parlamentar.vlrliquido), cota_parlamentar.txtdescricao from cota_parlamentar
+group by cota_parlamentar.txtdescricao ORDER BY SUM DESC
+
+--5 - Media mensal no ano de 2019 para gastos de depoutados do estado de Goias
+select ROUND(SUM(cota_parlamentar.vlrliquido) / 12, 2) from cota_parlamentar
+
+-- 6 - Qual o Gasto Total com cada servico para cada Partido
+SELECT SUM(cota_parlamentar.vlrliquido), cota_parlamentar.txtdescricao, cota_parlamentar.sgpartido from cota_parlamentar
+group by cota_parlamentar.sgpartido, cota_parlamentar.txtdescricao ORDER BY cota_parlamentar.sgpartido ASC
+
+--7 - 
+SELECT DISTINCT max(cota_parlamentar.vlrliquido), cota_parlamentar.sgpartido, cota_parlamentar.nummes from cota_parlamentar
+group by cota_parlamentar.nummes, cota_parlamentar.sgpartido order by nummes Asc
